@@ -17,6 +17,7 @@
 
 #include "tinyos.h"
 #include "kernel_sched.h"
+#include "util.h"
 
 /**
   @brief PID state
@@ -59,9 +60,38 @@ typedef struct process_control_block {
                              @c WaitChild() */
 
   FCB* FIDT[MAX_FILEID];  /**< @brief The fileid table of the process */
-
+  rlnode PTCB_list;
+  int thread_count;
 } PCB;
 
+/*
+This struct holds information for a PTCB 
+
+*/
+typedef struct process_thread_control_block{
+  TCB* tcb;
+
+  Task task;
+  int argl;
+  void* args;
+
+  int exitval;
+
+  int exited;
+  int detached;
+
+  int refcount;
+  CondVar* exit_cv;
+  rlnode PTCB_node;
+} PTCB;
+
+/**
+ * new fuction which is used as an argument to spawn in CreateThread,
+  to execute a process thread 
+*/
+
+
+void start_multiThread();
 
 /**
   @brief Initialize the process table.
@@ -81,6 +111,22 @@ void initialize_processes();
   @param pid the pid of the process 
   @returns A pointer to the PCB of the process, or NULL.
 */
+/*ADDED*/
+
+void initialize_ptcb(PTCB* ptcb,int args,void* argl,Task task);
+/**
+ * initialize ptcb 
+*/
+
+/*ADDED*/
+
+PTCB* acquire_PTCB();
+/**
+ * 
+ * malloc the size of a ptcb
+ *  @returns the PTCB
+*/
+
 PCB* get_pcb(Pid_t pid);
 
 /**

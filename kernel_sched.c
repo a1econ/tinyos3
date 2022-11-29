@@ -4,8 +4,7 @@
 
 #include "kernel_cc.h"
 #include "kernel_proc.h"
-#include "kernel_sched.h"
-#include "tinyos.h"
+#include "kernel_sched.h"typedef struct process_to_thread_control_block
 
 #ifndef NVALGRIND
 #include <valgrind/valgrind.h>
@@ -150,7 +149,7 @@ static void thread_start()
   Initialize and return a new TCB
 */
 
-TCB* spawn_thread(PCB* pcb, void (*func)())
+TCB* spawn_thread(PCB* pcb,void (*func)())
 {
 	/* The allocated thread size must be a multiple of page size */
 	TCB* tcb = (TCB*)allocate_thread(THREAD_SIZE);
