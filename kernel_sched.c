@@ -4,7 +4,8 @@
 
 #include "kernel_cc.h"
 #include "kernel_proc.h"
-#include "kernel_sched.h"typedef struct process_to_thread_control_block
+#include "kernel_sched.h"
+#include "tinyos.h"
 
 #ifndef NVALGRIND
 #include <valgrind/valgrind.h>
