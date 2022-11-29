@@ -899,8 +899,14 @@ BOOT_TEST(test_write_to_many_terminals,
 	return 0;
 }
 
-
-
+TEST_SUITE(single_test, 
+	"A suite of basic tests, focusing on the functional behaviour of the\n"
+	"tinyos3 API, but not the operational (concurrency and I/O multiplexing)."
+	)
+{
+	&test_boot,
+	NULL
+};
 
 TEST_SUITE(basic_tests, 
 	"A suite of basic tests, focusing on the functional behaviour of the\n"
@@ -1014,9 +1020,10 @@ BOOT_TEST(test_detach_illegal_tid_gives_error,
 {
 	ASSERT(ThreadDetach(NOTHREAD)==-1);
 
-	/* Test with random numbers. Since we only have one thread, any call is an illegal call. */
+	/* Test wie random numbers. Since we only have one thread, any call is an illegal call. */
 	for(int i=0; i<100; i++) {
 		Tid_t random_tid = lrand48();
+		printf("tid = %d\n", random_tid);
 		if(random_tid==ThreadSelf()) /* Very unlikely, but still... */
 			continue;
 		ASSERT(ThreadDetach(random_tid)==-1);
@@ -1402,20 +1409,21 @@ TEST_SUITE(thread_tests,
 	"A suite of tests for threads."
 	)
 {
+	&test_threadself,
 	&test_join_illegal_tid_gives_error,
 	&test_detach_illegal_tid_gives_error,
-	&test_detach_self,
-	&test_detach_other,
-	&test_multiple_detach,
-	&test_join_main_thread,
-	&test_detach_main_thread,
-	&test_detach_after_join,
+	//&test_detach_self,
+	//&test_detach_other,
+	//&test_multiple_detach,
+	//&test_join_main_thread,
+	//&test_detach_main_thread,
+	//&test_detach_after_join,
 	&test_create_join_thread,
 	&test_join_many_threads,
 	&test_exit_many_threads,
-	&test_main_exit_cleanup,
-	&test_noexit_cleanup,
-	&test_cyclic_joins,
+	//&test_main_exit_cleanup,
+	//&test_noexit_cleanup,
+	//&test_cyclic_joins,
 	NULL
 };
 
@@ -2566,13 +2574,14 @@ TEST_SUITE(io_tests,
 
 TEST_SUITE(all_tests,
 	"A suite containing all tests.")
-{
-	&basic_tests,
+{	
+	//&single_test,
+	//&basic_tests,
 	//&concurrency_tests,
 	//&io_tests,
 	&thread_tests,
-	&pipe_tests,
-	&socket_tests,
+	//&pipe_tests,
+	//&socket_tests,
 	NULL
 };
 
