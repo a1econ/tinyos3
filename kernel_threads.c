@@ -40,7 +40,7 @@ Tid_t sys_CreateThread(Task task, int argl, void* args)
  */
 Tid_t sys_ThreadSelf()
 {
-  printf("%d\n" ,cur_thread()->owner_ptcb->detached);
+  //printf("%d\n" ,cur_thread()->owner_ptcb->detached);
 	return (Tid_t) (cur_thread()->owner_ptcb);
 }
 
