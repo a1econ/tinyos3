@@ -88,7 +88,7 @@ void initialize_ptcb(PTCB* ptcb, int argl, void* args, Task task)
   ptcb->exited = 0;
 
   ptcb->refcount = 0;
-  ptcb->exit_cv = &COND_INIT;
+  ptcb->exit_cv = COND_INIT;
 }
 
 
@@ -233,7 +233,11 @@ Pid_t sys_Exec(Task call, int argl, void* args)
     newproc->thread_count++;
     newproc->main_thread->owner_ptcb = ptcb;
     ptcb->tcb = newproc->main_thread;
-    rlist_append(&newproc->PTCB_list, &ptcb->PTCB_node);
+    rlist_push_back(&newproc->PTCB_list, &ptcb->PTCB_node);
+    assert(ptcb != NULL);
+    assert(newproc->main_thread != NULL);
+    assert(&newproc->PTCB_list != NULL && &ptcb->PTCB_node != NULL);
+
     wakeup(newproc->main_thread);
   }
 

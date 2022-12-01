@@ -1023,7 +1023,7 @@ BOOT_TEST(test_detach_illegal_tid_gives_error,
 	/* Test wie random numbers. Since we only have one thread, any call is an illegal call. */
 	for(int i=0; i<100; i++) {
 		Tid_t random_tid = lrand48();
-		printf("tid = %d\n", random_tid);
+		//printf("tid = %d\n", random_tid);
 		if(random_tid==ThreadSelf()) /* Very unlikely, but still... */
 			continue;
 		ASSERT(ThreadDetach(random_tid)==-1);
@@ -1051,20 +1051,22 @@ BOOT_TEST(test_create_join_thread,
 	create_join_thread_flag = 0;
 
 	Tid_t t = CreateThread(create_join_thread_task, sizeof(create_join_thread_flag), &create_join_thread_flag);
-
+	printf("%d\n" ,t);
+	//printf("Success in create_thread");
 	/* Success in creating thread */
 	ASSERT(t!=NOTHREAD);
 	int exitval;
+	printf("%d\n" ,exitval);
 	
 	/* Join should succeed */
 	ASSERT(ThreadJoin(t, &exitval)==0);
-
+	
 	/* Exit status should be correct */
 	ASSERT(exitval==2);
 
 	/* Shared variable should be updates */
 	ASSERT(create_join_thread_flag==1);
-
+	
 	/* A second Join should fail! */
 	ASSERT(ThreadJoin(t, NULL)==-1);
 
@@ -1075,6 +1077,7 @@ BOOT_TEST(test_create_join_thread,
 BOOT_TEST(test_detach_self,
 	"Test that a thread can detach itself")
 {
+
 	ASSERT(ThreadDetach(ThreadSelf())==0);
 	return 0;
 }
@@ -1412,18 +1415,18 @@ TEST_SUITE(thread_tests,
 	&test_threadself,
 	&test_join_illegal_tid_gives_error,
 	&test_detach_illegal_tid_gives_error,
-	//&test_detach_self,
-	//&test_detach_other,
-	//&test_multiple_detach,
-	//&test_join_main_thread,
-	//&test_detach_main_thread,
-	//&test_detach_after_join,
+	&test_detach_self,
+	&test_detach_other,
+	&test_multiple_detach,
+	&test_join_main_thread,
+	&test_detach_main_thread,
+	&test_detach_after_join,
 	&test_create_join_thread,
 	&test_join_many_threads,
 	&test_exit_many_threads,
-	//&test_main_exit_cleanup,
-	//&test_noexit_cleanup,
-	//&test_cyclic_joins,
+	&test_main_exit_cleanup,
+	&test_noexit_cleanup,
+	&test_cyclic_joins,
 	NULL
 };
 

@@ -81,7 +81,7 @@ typedef struct process_thread_control_block{
   int detached;
 
   int refcount;
-  CondVar* exit_cv;
+  CondVar exit_cv;
   rlnode PTCB_node;
 } PTCB;
 

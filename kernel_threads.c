@@ -24,9 +24,10 @@ Tid_t sys_CreateThread(Task task, int argl, void* args)
 
   CURPROC->thread_count++;
   newtcb->owner_ptcb = ptcb;
+  assert(CURPROC != NULL && ptcb != NULL && newtcb != NULL);
  /* newtcb->owner_ptcb = ptcb;*/
   /*put the new ptcb in the list of the CURPROC*/
-  rlist_append(&CURPROC->PTCB_list,&ptcb->PTCB_node);
+  rlist_push_back(&CURPROC->PTCB_list,&ptcb->PTCB_node);
 
   /*wake up the new tcb*/
   wakeup(newtcb);
@@ -39,7 +40,6 @@ Tid_t sys_CreateThread(Task task, int argl, void* args)
  */
 Tid_t sys_ThreadSelf()
 {
-
 	return (Tid_t) (cur_thread()->owner_ptcb);
 }
 
@@ -53,20 +53,29 @@ Tid_t sys_ThreadSelf()
   */
 int sys_ThreadJoin(Tid_t tid, int* exitval)
 {
-  rlnode *node = rlist_find(&CURPROC->PTCB_list, ((PTCB*)tid), NULL);
+  
+  if(tid == NOTHREAD){
+    return -1;
+  }
   PTCB *ptcb = (PTCB *)tid;
-  //printf("%p %d\n", node, tid);
-  /*- the threads don't belong to the same process (PCB)*/
+  rlnode *node = rlist_find(&CURPROC->PTCB_list, ptcb, NULL);
+  //printf("the pointer is : %p\n" ,node);
+   //printf("%p %d\n", node, tid);
+    /*- the threads don't belong to the same process (PCB)*/
+
+
+  
   if(node == NULL){
     return -1;
   }
-
+  
   /**
    * - there is no thread with the given tid in this process.
    * - the tid corresponds to the current thread.
    * - the tid corresponds to a detached thread.
    */
-  if(tid == NOTHREAD || cur_thread()->owner_ptcb == ptcb || ptcb->detached == 1){
+  //printf("exitval = %p\n" ,*exitval);
+  if( cur_thread()->owner_ptcb == ptcb || ptcb->detached == 1 ){
     return -1;
   }
   
@@ -76,8 +85,9 @@ int sys_ThreadJoin(Tid_t tid, int* exitval)
   ptcb->refcount++;
 
   /* Make the current thread wait until the (PTCB)tid exits */
+  
   while(ptcb->detached == 0 && ptcb->exited == 0) {
-    kernel_wait(ptcb->exit_cv, SCHED_USER);
+    kernel_wait(&ptcb->exit_cv, SCHED_USER);
   }
 
   /* If the (PTCB*)tid is detached while waiting return -1 */
@@ -109,26 +119,29 @@ int sys_ThreadJoin(Tid_t tid, int* exitval)
 */
 int sys_ThreadDetach(Tid_t tid)
 { 
-  printf("sys_ThreadDetach\n");
-  printf("state = %d thread_count = %d\n", cur_thread()->state, CURPROC->thread_count);
+
+  //printf("%d\n" ,sys_ThreadSelf());
+  
+  //printf("sys_ThreadDetach\n");
+  //printf("state = %d thread_count = %d\n", cur_thread()->state, CURPROC->thread_count);
   if(tid == NOTHREAD){
-    printf("No Thread\n");
+    //printf("No Thread\n");
     return -1;
   }
   PTCB *ptcb = (PTCB *)tid;
   rlnode *node = rlist_find(&CURPROC->PTCB_list, ptcb, NULL);
-  if(node == NULL) {
+
+  if(node == NULL){
     return -1;
   }
   //printf("%d %d %p %d\n", ptcb->exited, ptcb->detached, node, tid);
-  if(ptcb->detached == 0 && ptcb->exited == 0 && node != NULL && ptcb != NOTHREAD) {
-    printf("thread detached\n");
+  if(ptcb->detached == 0 && ptcb->exited == 0  && ptcb != NOTHREAD && node != NULL) {
+    //printf("thread detached\n");
     ptcb->detached = 1; 
-    kernel_broadcast(ptcb->exit_cv);
+    kernel_broadcast(&ptcb->exit_cv);
     return 0;
   }
   return -1;
-	
 }
 
 /**
@@ -151,7 +164,7 @@ void sys_ThreadExit(int exitval)
   /* Send a signal to the waiting processes if there are  */
 
   if(curptcb->refcount != 0){
-    kernel_broadcast(curptcb->exit_cv);
+    kernel_broadcast(&curptcb->exit_cv);
   }
 
   if(curproc->thread_count == 0){
