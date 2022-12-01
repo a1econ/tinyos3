@@ -134,10 +134,6 @@ void release_PCB(PCB* pcb)
  * Process creation
  *
  */
-
-
-
-
 void start_multiThread()
 {
   int exitval;
@@ -155,8 +151,6 @@ void start_multiThread()
 	This function is provided as an argument to spawn,
 	to execute the main thread of a process.
 */
-
-
 void start_main_thread()
 {
   int exitval;
@@ -347,6 +341,10 @@ void sys_Exit(int exitval)
 {
 
   PCB *curproc = CURPROC;  /* cache for efficiency */
+  TCB* curthread = cur_thread();
+  PTCB* curptcb = curthread->owner_ptcb;
+
+  //printf("sys_Exit: process %d, thread %p exiting...\n",get_pid(CURPROC), sys_ThreadSelf());
 
   /* First, store the exit status */
   curproc->exitval = exitval;
@@ -385,8 +383,7 @@ void sys_Exit(int exitval)
 
   assert(is_rlist_empty(& curproc->children_list));
   assert(is_rlist_empty(& curproc->exited_list));
-
-
+ 
   /* 
     Do all the other cleanup we want here, close files etc. 
    */
@@ -404,6 +401,16 @@ void sys_Exit(int exitval)
       curproc->FIDT[i] = NULL;
     }
   }
+
+  //printf("sys_Exit: thread %p refcount=%d\n", curptcb, curptcb->refcount);
+
+   /* Send a signal to the waiting processes if there are  */
+  if(curptcb->refcount != 0){
+    kernel_broadcast(&curptcb->exit_cv);
+  }
+
+  /* Set current ptcp as exited (join threads must exit) */ 
+  curptcb->exited = 1;
 
   /* Disconnect my main_thread */
   curproc->main_thread = NULL;
