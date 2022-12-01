@@ -947,8 +947,6 @@ TEST_SUITE(basic_tests,
 	NULL
 };
 
-
-
 /*********************************************
  *
  *
@@ -958,7 +956,6 @@ TEST_SUITE(basic_tests,
  *
  *
  *********************************************/
-
 
 void sleep_thread(int sec) {
 	Mutex mx = MUTEX_INIT;
@@ -977,13 +974,13 @@ int run_get_status(Task task, int argl, void* args)
 {
 	Pid_t pid = Exec(task, argl, args);
 	ASSERT(pid!=NOPROC);
-
+	printf("validate_api: run_get_status %d waiting...\n", pid);
 	int exitval;
 	ASSERT(WaitChild(pid, &exitval)==pid);
+	printf("validate_api: run_get_status exiting with exitval = %d\n", exitval);
 
 	return exitval;
 }
-
 
 BOOT_TEST(test_threadself,
 	"Test that ThreadSelf is somewhat sane")
@@ -992,8 +989,6 @@ BOOT_TEST(test_threadself,
 	ASSERT(ThreadSelf() == ThreadSelf());
 	return 0;
 }
-
-
 
 BOOT_TEST(test_join_illegal_tid_gives_error,
 	"Test that ThreadJoin rejects an illegal Tid")
@@ -1014,7 +1009,6 @@ BOOT_TEST(test_join_illegal_tid_gives_error,
 	return 0;
 }
 
-
 BOOT_TEST(test_detach_illegal_tid_gives_error,
 	"Test that ThreadDetach rejects an illegal Tid")
 {
@@ -1023,7 +1017,7 @@ BOOT_TEST(test_detach_illegal_tid_gives_error,
 	/* Test wie random numbers. Since we only have one thread, any call is an illegal call. */
 	for(int i=0; i<100; i++) {
 		Tid_t random_tid = lrand48();
-		printf("tid = %d\n", random_tid);
+		//printf("tid = %d\n", random_tid);
 		if(random_tid==ThreadSelf()) /* Very unlikely, but still... */
 			continue;
 		ASSERT(ThreadDetach(random_tid)==-1);
@@ -1031,8 +1025,6 @@ BOOT_TEST(test_detach_illegal_tid_gives_error,
 
 	return 0;
 }
-
-
 
 static int create_join_thread_flag;
 
@@ -1049,7 +1041,6 @@ BOOT_TEST(test_create_join_thread,
 	)
 {
 	create_join_thread_flag = 0;
-
 	Tid_t t = CreateThread(create_join_thread_task, sizeof(create_join_thread_flag), &create_join_thread_flag);
 
 	/* Success in creating thread */
@@ -1079,11 +1070,6 @@ BOOT_TEST(test_detach_self,
 	return 0;
 }
 
-
-
-
-
-
 static int tdo_thread(int argl, void* args) {
 	fibo(40);
 	return 100;
@@ -1107,7 +1093,6 @@ BOOT_TEST(test_detach_other,
 	return 0;
 }
 
-
 BOOT_TEST(test_multiple_detach,
 	"Test that a thread can be detached many times.")
 {
@@ -1118,9 +1103,6 @@ BOOT_TEST(test_multiple_detach,
 
 	return 0;
 }
-
-
-
 
 /* A thread to be joined */
 static int joined_thread(int argl, void* args) {
@@ -1135,7 +1117,6 @@ static int joiner_thread(int argl, void* args) {
 	ASSERT(rc==-1 || retval==5213);
 	return (rc==0)? 1 : 0;
 }
-
 
 int join_many_threads_main(int argl, void* args) {
 	Tid_t tids[5];
@@ -1172,8 +1153,6 @@ BOOT_TEST(test_join_many_threads,
 	return 0;
 }
 
-
-
 static Tid_t mttid;
 
 static int join_notmain_thread(int argl, void* args) {
@@ -1187,15 +1166,12 @@ static int join_main_thread(int argl, void* args) {
 	return 42;
 }
 
-
 BOOT_TEST(test_join_main_thread,
 	"Test that the main thread can be joined by another thread")
 {
 	ASSERT(run_get_status(join_main_thread, 0, NULL) == 42);
 	return 0;
 }
-
-
 
 int detach_notmain_thread(int argl, void* args) {
 	ASSERT(ThreadJoin(mttid, NULL)==-1);
@@ -1210,18 +1186,12 @@ int detach_main_thread(int argl, void* args) {
 	return 42;
 }
 
-
-
 BOOT_TEST(test_detach_main_thread,
 	"Test that the main thread can be detached")
 {
 	ASSERT(run_get_status(detach_main_thread, 0, NULL) == 42);
 	return 0;
 }
-
-
-
-
 
 /* A thread to be joined */
 int detach_after_join_joined_thread(int argl, void* args) {
@@ -1238,7 +1208,6 @@ int detach_after_join_joiner_thread(int argl, void* args)
 	ASSERT(rc==-1);
 	return 0;
 }
-
 
 int detach_after_join_main_thread(int argl, void* args) 
 {
@@ -1267,10 +1236,9 @@ BOOT_TEST(test_detach_after_join,
 	return 0;
 }
 
-
-
 static int exit_many_threads_task(int argl, void* args) {
 	fibo(40);
+	printf("Validate_api: exit_many_threads_task... exiting thread with arg: %d\n", argl);
 	Exit(40 + argl);
 	return 0;
 }
@@ -1280,6 +1248,7 @@ static int exit_many_threads_mthread(int argl, void* args){
 		ASSERT(CreateThread(exit_many_threads_task, i, NULL) != NOTHREAD);
 
 	/* This thread calls ThreadExit probably before the children all exit */
+	printf("Validate_api: exit_many_threads_mthread... exiting\n");
 	ThreadExit(0);
 	return 0;
 }
@@ -1290,12 +1259,10 @@ BOOT_TEST(test_exit_many_threads,
 	)
 {
 	int status = run_get_status(exit_many_threads_mthread, 0, NULL);
+	printf("Validate_api: run_get_status: status= %d\n", status);
 	ASSERT(40 <= status && status < 45);
 	return 0;
 }
-
-
-
 
 static int main_exit_cleanup_task(int argl, void* args) {
 	fibo(40);
@@ -1320,22 +1287,23 @@ BOOT_TEST(test_main_exit_cleanup,
 	return 0;
 }
 
-
-
-
-
 int noexit_cleanup_task(int argl, void* args) {
+	printf("validate_api: noexit_cleanup_task started\n");
 	fibo(40);
+	printf("validate_api: noexit_cleanup_task exiting\n");
 	ThreadExit(2);
 	FAIL("We should not be here");
 	return 0;
 }
 
 int noexit_cleanup_mthread(int argl, void* args){
+	printf("validate_api: noexit_cleanup_mthread started\n");
 	for(int i=0;i<5;i++)
 		ASSERT(CreateThread(noexit_cleanup_task, 0, NULL) != NOTHREAD);
 
+	printf("validate_api: noexit_cleanup_mthread exiting\n");
 	/* This thread calls exit probably before the children all exit */
+	//Exit(0);
 	ThreadExit(0);
 	FAIL("We should not be here");
 	return 42;
@@ -1348,9 +1316,6 @@ BOOT_TEST(test_noexit_cleanup,
 	run_get_status(noexit_cleanup_mthread, 0, NULL);
 	return 0;
 }
-
-
-
 
 struct cyclic_joins
 {
@@ -1390,7 +1355,6 @@ static int cyclic_joins_main_thread(int argl, void* args)
 	return 0;
 }
 
-
 BOOT_TEST(test_cyclic_joins,
 	"Test that a set of cyclically joined threads will not deadlock once the cycle breaks")
 {
@@ -1404,7 +1368,6 @@ BOOT_TEST(test_cyclic_joins,
 	return 0;
 }
 
-
 TEST_SUITE(thread_tests, 
 	"A suite of tests for threads."
 	)
@@ -1412,18 +1375,18 @@ TEST_SUITE(thread_tests,
 	&test_threadself,
 	&test_join_illegal_tid_gives_error,
 	&test_detach_illegal_tid_gives_error,
-	//&test_detach_self,
-	//&test_detach_other,
-	//&test_multiple_detach,
-	//&test_join_main_thread,
-	//&test_detach_main_thread,
-	//&test_detach_after_join,
+	&test_detach_self,
+	&test_detach_other,
+	&test_multiple_detach,
+	&test_join_main_thread,
+	&test_detach_main_thread,
+	&test_detach_after_join,
 	&test_create_join_thread,
 	&test_join_many_threads,
 	&test_exit_many_threads,
-	//&test_main_exit_cleanup,
-	//&test_noexit_cleanup,
-	//&test_cyclic_joins,
+	&test_main_exit_cleanup,
+	&test_noexit_cleanup,
+	&test_cyclic_joins,
 	NULL
 };
 
@@ -2409,10 +2372,6 @@ TEST_SUITE(concurrency_tests,
 	NULL
 };
 
-
-
-
-
 /*********************************************
  *
  *
@@ -2467,8 +2426,6 @@ BOOT_TEST(test_input_concurrency,
 	ASSERT(WaitChild(p0, NULL)==p0);
 	return 0;
 }
-
-
 
 BOOT_TEST(test_term_input_driver_interrupt,
 	"Test that terminal input is interrupt driven. This is done by\n"
@@ -2544,9 +2501,6 @@ BOOT_TEST(test_term_input_driver_interrupt,
 	return 0;
 }
 
-
-
-
 TEST_SUITE(io_tests,
 	"A suite of tests which test the concurrency of terminal I/O."
 	)
@@ -2555,9 +2509,6 @@ TEST_SUITE(io_tests,
 	&test_term_input_driver_interrupt,
 	NULL
 };
-
-
-
 
 /*********************************************
  *
@@ -2569,23 +2520,18 @@ TEST_SUITE(io_tests,
  *
  *********************************************/
 
-
-
-
 TEST_SUITE(all_tests,
 	"A suite containing all tests.")
 {	
 	//&single_test,
-	//&basic_tests,
-	//&concurrency_tests,
+	&basic_tests,
+	&concurrency_tests,
 	//&io_tests,
 	&thread_tests,
 	//&pipe_tests,
 	//&socket_tests,
 	NULL
 };
-
-
 
 /****************************************************************************
  *
@@ -2596,7 +2542,6 @@ TEST_SUITE(all_tests,
  * You can then run your tests by
  *   ./validate_api user_tests
  ****************************************************************************/
-
 
 BARE_TEST(dummy_user_test,
 	"A dummy test, feel free to edit it and copy it as needed."
@@ -2613,10 +2558,6 @@ TEST_SUITE(user_tests,
 	&dummy_user_test,
 	NULL
 };
-
-
-
-
 
 int main(int argc, char** argv)
 {
