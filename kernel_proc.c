@@ -334,9 +334,11 @@ Pid_t sys_WaitChild(Pid_t cpid, int* status)
 
 void sys_Exit(int exitval)
 {
-  PCB *curproc = CURPROC;  /* cache for efficiency */
+  PCB* curproc = CURPROC;
+  TCB* curthread = cur_thread();
+  PTCB* curptcb = curthread->owner_ptcb;
 
-  printf("sys_Exit: process %d, thread %p exiting...\n",get_pid(CURPROC), sys_ThreadSelf());
+  //printf("sys_Exit: process %d, thread %p exiting...\n",get_pid(CURPROC), sys_ThreadSelf());
 
   /* First, store the exit status */
   curproc->exitval = exitval;
@@ -385,17 +387,27 @@ void sys_Exit(int exitval)
   assert(is_rlist_empty(& curproc->children_list));
   assert(is_rlist_empty(& curproc->exited_list));
 
+  //printf("sys_Exit: thread %p refcount=%d\n", curptcb, curptcb->refcount);
+
+   /* Send a signal to the waiting processes if there are  */
+  if(curptcb->refcount != 0){
+    kernel_broadcast(&curptcb->exit_cv);
+  }
+
+  /* Set current ptcp as exited (join threads must exit) */ 
+  curptcb->exited = 1;
+
   /* Disconnect my main_thread */
   curproc->main_thread = NULL;
 
   /* Now, mark the process as exited. */
   curproc->pstate = ZOMBIE;
-  curproc->exitval = exitval;
 
-  sys_ThreadExit(exitval);
+  /* Disconnect my main_thread */
+  curproc->main_thread = NULL;
 
   /* Bye-bye cruel world */
-  //kernel_sleep(EXITED, SCHED_USER);
+  kernel_sleep(EXITED, SCHED_USER);
 }
 
 

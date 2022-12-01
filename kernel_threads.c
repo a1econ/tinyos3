@@ -28,7 +28,7 @@ Tid_t sys_CreateThread(Task task, int argl, void* args)
   /* put the new ptcb in the list of the CURPROC */
   rlist_push_back(&CURPROC->PTCB_list, &ptcb->PTCB_node);
 
-  printf("sys_CreateThread: process %d, current thread %p new thread %p\n", get_pid(CURPROC), cur_thread()->owner_ptcb, ptcb);
+  //printf("sys_CreateThread: process %d, current thread %p new thread %p\n", get_pid(CURPROC), cur_thread()->owner_ptcb, ptcb);
 
   /* wake up the new tcb */
   wakeup(newtcb);
@@ -58,7 +58,7 @@ int sys_ThreadJoin(Tid_t tid, int* exitval)
   PTCB *ptcb = (PTCB *)tid;
   rlnode *node = rlist_find(&CURPROC->PTCB_list, ptcb, NULL);
 
-  printf("sys_ThreadJoin: current thread: %p join thread %p\n", sys_ThreadSelf(), tid);
+  //printf("sys_ThreadJoin: current thread: %p join thread %p\n", sys_ThreadSelf(), tid);
 
   /*- the tid thread doesn't belong to the same process (PCB)*/
   if(node == NULL){
@@ -84,7 +84,7 @@ int sys_ThreadJoin(Tid_t tid, int* exitval)
     kernel_wait(&ptcb->exit_cv, SCHED_USER);
   }
 
-  printf("sys_ThreadJoin: thread %p continuing... \n", sys_ThreadSelf());
+  //printf("sys_ThreadJoin: thread %p continuing... \n", sys_ThreadSelf());
 
   /* If tid is detached while waiting return -1 */
   if(ptcb->detached) {
@@ -105,7 +105,7 @@ int sys_ThreadJoin(Tid_t tid, int* exitval)
     free(ptcb);
   }
 
-  printf("sys_ThreadJoin: thread %p exiting... \n", sys_ThreadSelf());
+  //printf("sys_ThreadJoin: thread %p exiting... \n", sys_ThreadSelf());
 	return 0;
 }
 
@@ -147,24 +147,24 @@ void sys_ThreadExit(int exitval)
   TCB* curthread = cur_thread();
   PTCB* curptcb = curthread->owner_ptcb;
 
-  //curptcb->exitval = exitval;
-  //curptcb->exited = 1;
-  //curptcb->tcb = NULL;
+  //printf("sys_ThreadExit: process %d with state %d thread %p\n", get_pid(curproc), curproc->pstate, curptcb);
 
-  //curproc->thread_count --;
+  curptcb->exitval = exitval;
+  curptcb->exited = 1;
+  curptcb->tcb = NULL;
+
+  curproc->thread_count--;
 
   assert((cur_thread()->owner_ptcb) != NULL);
 
   /* Send a signal to the waiting threads */
-  //if(curptcb->refcount != 0){
-  //  kernel_broadcast(&curptcb->exit_cv);
-  //}
+  if(curptcb->refcount != 0){
+    kernel_broadcast(&curptcb->exit_cv);
+  }
 
-  printf("sys_ThreadExit: process %d with state %d, thread %p\n", get_pid(curproc), curproc->pstate, curptcb);
-  /* check if current thread is the main thread */
-  if(curthread == curproc->main_thread){
-    printf("sys_ThreadExit: this is the main thread... process %d with state:%d\n", get_pid(curproc), curproc->pstate);
-#if 1
+  /* check if no more threads */
+  if(curproc->thread_count == 0){
+
     if(get_pid(curproc)==1) {
       while(sys_WaitChild(NOPROC,NULL)!=NOPROC);
     }
@@ -208,45 +208,13 @@ void sys_ThreadExit(int exitval)
 
     assert(is_rlist_empty(& curproc->children_list));
     assert(is_rlist_empty(& curproc->exited_list));
-    //curproc->pstate = ZOMBIE;
-#endif
+
+    curproc->pstate = ZOMBIE;
+
     curproc->main_thread = NULL;
     curproc->exitval = exitval;
-    /*
-    rlnode *temp;
-    printf("sys_ExitThread: main thread, thread list length: %d\n", rlist_len(&CURPROC->PTCB_list));
-    for(int i = 0; i < rlist_len(&CURPROC->PTCB_list); i++){
-      temp = rlist_pop_front(&CURPROC->PTCB_list);
-      if (temp->ptcb == curptcb) {
-          continue;
-      }
-      printf("sys_ThreadExit: main thread waiting for thread %p\n", temp->ptcb);
-      rlist_push_back(&CURPROC->PTCB_list, temp);
-
-      temp->ptcb->refcount++;
-      kernel_wait(&temp->ptcb->exit_cv, SCHED_USER);
-      temp->ptcb->refcount--;
-      exitval = temp->ptcb->exitval;
-      printf("sys_ExitThread: main thread, thread list length: %d\n", rlist_len(&CURPROC->PTCB_list));
-    }
-    //kernel_sleep(STOPPED, SCHED_USER);
-    printf("sys_ThreadExit: setting process to zombie state end exiting... with exit value:%d\n", exitval);
-    */
-   //sys_Exit(exitval);
   }
  
-  printf("sys_ExitThread: thread %p refcount: %d\n", curptcb, curptcb->refcount);
-
-  curptcb->exitval = exitval;
-  curptcb->exited = 1;
-
-  /* Send a signal to the waiting threads */
-  if(curptcb->refcount != 0){
-    kernel_broadcast(&curptcb->exit_cv);
-  }
-
-  curproc->thread_count--;
-
   /* clean up if no more threads */
   if(curproc->thread_count == 0){
     rlnode *temp;
@@ -256,10 +224,8 @@ void sys_ThreadExit(int exitval)
       free(temp->ptcb);
     }
   } 
-  //rlnode *tmp = rlist_remove(&curptcb->PTCB_node);
-  //free(tmp->ptcb);
-  //curptcb->tcb = NULL;
-  printf("sys_ThreadExit: thread %p exiting with exit value:%d, thread count=%d\n", curptcb, exitval, curproc->thread_count);
+
+  //printf("sys_ThreadExit: thread %p exiting with exit value:%d, thread count=%d\n", curptcb, exitval, curproc->thread_count);
 
   // Stop the thread
   kernel_sleep(EXITED, SCHED_USER);

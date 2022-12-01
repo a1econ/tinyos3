@@ -974,10 +974,10 @@ int run_get_status(Task task, int argl, void* args)
 {
 	Pid_t pid = Exec(task, argl, args);
 	ASSERT(pid!=NOPROC);
-	printf("validate_api: run_get_status %d waiting...\n", pid);
+	//printf("validate_api: run_get_status %d waiting...\n", pid);
 	int exitval;
 	ASSERT(WaitChild(pid, &exitval)==pid);
-	printf("validate_api: run_get_status exiting with exitval = %d\n", exitval);
+	//printf("validate_api: run_get_status exiting with exitval = %d\n", exitval);
 
 	return exitval;
 }
@@ -1238,7 +1238,7 @@ BOOT_TEST(test_detach_after_join,
 
 static int exit_many_threads_task(int argl, void* args) {
 	fibo(40);
-	printf("Validate_api: exit_many_threads_task... exiting thread with arg: %d\n", argl);
+	//printf("Validate_api: exit_many_threads_task... exiting thread with arg: %d\n", argl);
 	Exit(40 + argl);
 	return 0;
 }
@@ -1248,7 +1248,7 @@ static int exit_many_threads_mthread(int argl, void* args){
 		ASSERT(CreateThread(exit_many_threads_task, i, NULL) != NOTHREAD);
 
 	/* This thread calls ThreadExit probably before the children all exit */
-	printf("Validate_api: exit_many_threads_mthread... exiting\n");
+	//printf("Validate_api: exit_many_threads_mthread... exiting\n");
 	ThreadExit(0);
 	return 0;
 }
@@ -1259,7 +1259,7 @@ BOOT_TEST(test_exit_many_threads,
 	)
 {
 	int status = run_get_status(exit_many_threads_mthread, 0, NULL);
-	printf("Validate_api: run_get_status: status= %d\n", status);
+	//printf("Validate_api: run_get_status: status= %d\n", status);
 	ASSERT(40 <= status && status < 45);
 	return 0;
 }
@@ -1288,20 +1288,20 @@ BOOT_TEST(test_main_exit_cleanup,
 }
 
 int noexit_cleanup_task(int argl, void* args) {
-	printf("validate_api: noexit_cleanup_task started\n");
+	//printf("validate_api: noexit_cleanup_task started\n");
 	fibo(40);
-	printf("validate_api: noexit_cleanup_task exiting\n");
+	//printf("validate_api: noexit_cleanup_task exiting\n");
 	ThreadExit(2);
 	FAIL("We should not be here");
 	return 0;
 }
 
 int noexit_cleanup_mthread(int argl, void* args){
-	printf("validate_api: noexit_cleanup_mthread started\n");
+	//printf("validate_api: noexit_cleanup_mthread started\n");
 	for(int i=0;i<5;i++)
 		ASSERT(CreateThread(noexit_cleanup_task, 0, NULL) != NOTHREAD);
 
-	printf("validate_api: noexit_cleanup_mthread exiting\n");
+	//printf("validate_api: noexit_cleanup_mthread exiting\n");
 	/* This thread calls exit probably before the children all exit */
 	//Exit(0);
 	ThreadExit(0);
@@ -2525,7 +2525,7 @@ TEST_SUITE(all_tests,
 {	
 	//&single_test,
 	&basic_tests,
-	&concurrency_tests,
+	//&concurrency_tests,
 	//&io_tests,
 	&thread_tests,
 	//&pipe_tests,
