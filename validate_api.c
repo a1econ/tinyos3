@@ -975,11 +975,14 @@ void sleep_thread(int sec) {
 
 int run_get_status(Task task, int argl, void* args)
 {
+	//Tid_t tid = ThreadSelf();
 	Pid_t pid = Exec(task, argl, args);
+	//printf("validate_api: run_get_status thread %p with pid %d waiting...\n", tid, pid);
 	ASSERT(pid!=NOPROC);
 
 	int exitval;
 	ASSERT(WaitChild(pid, &exitval)==pid);
+	//printf("validate_api: run_get_status %p exiting with exitval = %d\n",tid, exitval);
 
 	return exitval;
 }
@@ -1051,12 +1054,12 @@ BOOT_TEST(test_create_join_thread,
 	create_join_thread_flag = 0;
 
 	Tid_t t = CreateThread(create_join_thread_task, sizeof(create_join_thread_flag), &create_join_thread_flag);
-	printf("%d\n" ,t);
+	//printf("%d\n" ,t);
 	//printf("Success in create_thread");
 	/* Success in creating thread */
 	ASSERT(t!=NOTHREAD);
 	int exitval;
-	printf("%d\n" ,exitval);
+	//printf("%d\n" ,exitval);
 	
 	/* Join should succeed */
 	ASSERT(ThreadJoin(t, &exitval)==0);
@@ -1178,15 +1181,21 @@ BOOT_TEST(test_join_many_threads,
 
 
 static Tid_t mttid;
+static Tid_t tid;
 
 static int join_notmain_thread(int argl, void* args) {
+	tid = ThreadSelf();
+	//printf("validate_api: join_notmain_thread %p joins %p\n", tid, mttid);
 	ASSERT(ThreadJoin(mttid, NULL)==0);
+	//printf("validate_api: join_notmain_thread %p exiting...\n", tid);
 	return 0;
 }
 
 static int join_main_thread(int argl, void* args) {
 	mttid = ThreadSelf();
+	//printf("validate_api: join_main_thread %p\n", mttid);
 	ASSERT(CreateThread(join_notmain_thread,0,NULL)!=NOTHREAD);
+	//printf("validate_api: join_main_thread %p exiting...\n", mttid);
 	return 42;
 }
 
@@ -2579,7 +2588,7 @@ TEST_SUITE(all_tests,
 	"A suite containing all tests.")
 {	
 	//&single_test,
-	//&basic_tests,
+	&basic_tests,
 	//&concurrency_tests,
 	//&io_tests,
 	&thread_tests,
