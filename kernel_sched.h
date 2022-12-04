@@ -114,7 +114,7 @@ typedef struct thread_control_block {
 	rlnode sched_node; /**< @brief Node to use when queueing in the scheduler queue */
 	TimerDuration its; /**< @brief Initial time-slice for this thread */
 	TimerDuration rts; /**< @brief Remaining time-slice for this thread */
-
+  int priority;
 	enum SCHED_CAUSE curr_cause; /**< @brief The endcause for the current time-slice */
 	enum SCHED_CAUSE last_cause; /**< @brief The endcause for the last time-slice */
 
@@ -214,6 +214,14 @@ TCB* spawn_thread(PCB* pcb,void (*func)());
 
 */
 int wakeup(TCB* tcb);
+
+
+/*
+	When the number of yields reaches the Max_num_of yields,we boost every queue(exepct the first one) 
+	1 priority up
+*/
+
+void boost_the_lower_queues();
 
 /** 
   @brief Block the current thread.
