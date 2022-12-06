@@ -118,6 +118,8 @@ typedef struct thread_control_block {
 	enum SCHED_CAUSE curr_cause; /**< @brief The endcause for the current time-slice */
 	enum SCHED_CAUSE last_cause; /**< @brief The endcause for the last time-slice */
 
+  int priority; /* thread priority index for MFQ scheduling */
+
 #ifndef NVALGRIND
 	unsigned valgrind_stack_id; /**< @brief Valgrind helper for stacks. 
 
@@ -214,6 +216,12 @@ TCB* spawn_thread(PCB* pcb,void (*func)());
 
 */
 int wakeup(TCB* tcb);
+
+/*
+￼	When the number of yields reaches the Max_num_of yields, scheduler increases the priority of tasks
+  in all queues by 1, but the first one.
+￼*/
+void boost_lower_queues();
 
 /** 
   @brief Block the current thread.
