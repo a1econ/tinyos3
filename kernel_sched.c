@@ -498,7 +498,7 @@ void yield(enum SCHED_CAUSE cause)
 }
 
 /*
- * increase the priority of the first in queue threads by 1
+ * increase the priority of all the threads by 1
  */
 void boost_lower_queues() 
 {
@@ -510,14 +510,14 @@ void boost_lower_queues()
 	for(int i = MFQ_SIZE - 2; i >= 0; i--) {
 		if (!is_rlist_empty(&SCHED[i])) {
 			qlen = rlist_len(&SCHED[i]);
-			/* get all threads in queue and increase its priority */
+			/* get all threads in queue and increase their priority */
 			for (int j = 0; j < qlen; j++) {
 				node = rlist_pop_front(&SCHED[i]); /* take the first thread in front of the queue */
 				if (node->tcb->priority < (MFQ_SIZE - 1)) {
 					node->tcb->priority++; /* increase it's priority */
 					//node->tcb->priority = MFQ_SIZE - 1; /* increase it's priority */
 				}
-				rlist_push_back(&SCHED[i],node); /* push the thread back back in the queue */
+				rlist_push_back(&SCHED[i + 1],node); /* push the thread back back in the queue */
 			}
 		}
 	}
